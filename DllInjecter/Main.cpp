@@ -36,6 +36,7 @@ BOOL _stdcall SelectDllFile(wchar_t *FileBuf, UINT BufLen)
 	OpenFIle.lpstrTitle = L"打开DLL文件";
 	return GetOpenFileName(&OpenFIle);
 }
+
 //窗户消息处理
 BOOL _stdcall DiaProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -48,6 +49,12 @@ BOOL _stdcall DiaProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		Var::hWnd = hWnd;
 		GetProcessList();
 		GetInjectType();
+		//允许窗口被拖放;
+		DragAcceptFiles(hWnd, TRUE);
+		//设置消息过滤权限.防止因UAC管理员启动而使拖放消息被屏蔽
+		ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
+		ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD);
+		ChangeWindowMessageFilter(0x0049, MSGFLT_ADD); //0x0049 == WM_COPYGLOBALDATA;
 		break;
 	case WM_CLOSE:
 		PostQuitMessage(NULL);
@@ -91,6 +98,11 @@ BOOL _stdcall DiaProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 		}
 		break;
+	case WM_DROPFILES:
+		DragQueryFile((HDROP)wParam, NULL, FileBuf, sizeof(FileBuf));
+		DragFinish((HDROP)wParam);
+		SetDlgItemText(hWnd, IDC_EDIT_DllPath, FileBuf);
+		break;
 	default:
 		return FALSE;
 	}
@@ -99,6 +111,6 @@ BOOL _stdcall DiaProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 int _stdcall WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nShowCmd)
 {
 	Var::hInstance = hInstance;
-	DialogBox(hInstance, MAKEINTRESOURCE(IDD_DIALOG1), NULL, DiaProc);
+	DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_DIALOG1), NULL, DiaProc, NULL);
 	return 0;
 }

@@ -6,5 +6,6 @@ namespace Var
 {
 	extern HWND hWnd;
 	extern HINSTANCE hInstance;
+	extern WNDPROC OldWndProc;
 }
 #endif // !Variable_H
